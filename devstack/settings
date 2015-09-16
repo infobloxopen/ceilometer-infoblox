@@ -1,0 +1,5 @@
+CEILOMETER_INFOBLOX_DIR=$DEST/ceilometer-infoblox
+
+CEILOMETER_INFOBLOX_SNMP_COMMUNITY=${CEILOMETER_INFOBLOX_SNMP_COMMUNITY:-public}
+
+enable_service ceilometer-infoblox
