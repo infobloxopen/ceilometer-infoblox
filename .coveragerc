@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = ceilometer_infoblox
+omit = ceilometer_infoblox/openstack/*
+
+[report]
+ignore-errors = True
