@@ -10,7 +10,9 @@ function init_ceilometer_infoblox {
 }
 
 function configure_ceilometer_infoblox {
-    iniset $CEILOMETER_CONF infoblox snmp_community $CEILOMETER_INFOBLOX_SNMP_COMMUNITY
+    iniset $CEILOMETER_CONF infoblox snmp_community_or_username $CEILOMETER_INFOBLOX_SNMP_COMMUNITY
+    iniset $CEILOMETER_CONF infoblox use_floating_ip $CEILOMETER_INFOBLOX_USE_FLOATING_IP
+    iniset $CEILOMETER_CONF infoblox management_network $CEILOMETER_INFOBLOX_MANAGEMENT_NETWORK
 }
 
 # check for service enabled
