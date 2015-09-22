@@ -14,23 +14,23 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from ceilometer import sample
 from ceilometer_infoblox import pollsters
 
 
 class QPSPollster(pollsters.BaseNIOSPollster):
 
-    def metric_oid(self):
-        return self.OID_IB_DNS_QPS
+    def __init__(self):
+        super(QPSPollster, self).__init__()
 
-    def metric_converter(self):
-        return int
-
-    def metric_name(self):
-        return 'nios.dns.qps'
-
-    def metric_unit(self):
-        return 'queries/s'
-
-    def metric_type(self):
-        return sample.TYPE_GAUGE
+    @property
+    def meter_dict(self):
+        return {
+            'name': 'nios.dns.qps',
+            'unit': 'queries/s',
+            'type': 'gauge',
+            'snmp_inspector': {
+                'matching_type': 'exact',
+                'oid': '1.3.6.1.4.1.7779.3.1.1.3.1.6.0',
+                'type': 'int'
+            }
+        }
