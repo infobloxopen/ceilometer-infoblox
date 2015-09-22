@@ -49,7 +49,6 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
         return cfg.CONF['infoblox'].use_floating_ip
 
     def _instance_ip(self, instance):
-
         port = instance.addresses[self.management_network]
 
         # Only IPv4 for now
@@ -61,6 +60,10 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
                 continue
             use_ip = ip['addr']
             break
+
+        # Treat no IP found the same as invalid network name
+        if use_ip is None:
+            raise KeyError
 
         return use_ip
 
