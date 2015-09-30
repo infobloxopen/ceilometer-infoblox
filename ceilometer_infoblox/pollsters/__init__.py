@@ -17,18 +17,16 @@ import abc
 from oslo_utils import timeutils
 import six
 
-from ceilometer.hardware.pollsters import generic
+from ceilometer.hardware import plugin
 from ceilometer import sample
 
+from ceilometer_infoblox import inspector as ins
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseNIOSPollster(generic.GenericHardwareDeclarativePollster):
+class BaseNIOSPollster(plugin.HardwarePollster):
 
     def __init__(self):
         super(BaseNIOSPollster, self).__init__()
-
-        meter = generic.MeterDefinition(self.meter_dict)
-        self._update_meter_definition(meter)
 
     @property
     def default_discovery(self):
@@ -41,18 +39,25 @@ class BaseNIOSPollster(generic.GenericHardwareDeclarativePollster):
         :param data: list of data returned by the corresponding inspector
         """
         samples = []
-        definition = self.meter_definition
         for (value, metadata, extra) in data:
-            s = sample.Sample(
-                name=definition.name,
-                type=definition.type,
-                unit=definition.unit,
-                volume=value,
-                user_id=extra['user_id'],
-                project_id=extra['tenant_id'],
-                resource_id=extra['resource_id'],
-                timestamp=timeutils.utcnow().isoformat(),
-                resource_metadata=extra,
-            )
-            samples.append(s)
+            samples.append(self.generate_one_sample(value, metadata, extra))
         return samples
+
+    def generate_one_sample(self, value, metadata, extra):
+        return sample.Sample(
+            name=self.meter_name,
+            type=self.meter_type,
+            unit=self.meter_unit,
+            volume=value,
+            user_id=extra['user_id'],
+            project_id=extra['tenant_id'],
+            resource_id=extra['resource_id'],
+            timestamp=timeutils.utcnow().isoformat(),
+            resource_metadata=extra,
+        )
+
+    def _get_inspector(self, parsed_url):
+        if parsed_url.scheme not in self.inspectors:
+            driver = ins.NIOSInspector()
+            self.inspectors[parsed_url.scheme] = driver
+        return self.inspectors[parsed_url.scheme]

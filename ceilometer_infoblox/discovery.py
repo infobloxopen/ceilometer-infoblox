@@ -16,7 +16,6 @@ from oslo_config import cfg
 from oslo_log import log
 
 from ceilometer.compute import discovery
-from ceilometer.i18n import _
 
 LOG = log.getLogger(__name__)
 
@@ -107,7 +106,7 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
                 resources.append(resource)
             except KeyError:
                 LOG.error(
-                    _("Couldn't obtain %(type)s IP address for network "
+                    ("Couldn't obtain %(type)s IP address for network "
                       " %(network)s of instance %(id)s")
                     % ({'type': 'floating' if self.use_floating else 'fixed',
                         'network': self.management_network,

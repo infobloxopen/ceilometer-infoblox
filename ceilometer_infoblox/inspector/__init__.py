@@ -12,25 +12,21 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+"""Inspector for collecting Infoblox-specific data over SNMP"""
 
-from ceilometer_infoblox import pollsters
+from ceilometer.hardware.inspector import snmp
 
 
-class QPSPollster(pollsters.BaseNIOSPollster):
+class NIOSInspector(snmp.SNMPInspector):
+
+    MAPPING = {
+        'nios.dns.qps': {
+            'matching_type': 'exact',
+            'metric_oid': ('1.3.6.1.4.1.7779.3.1.1.3.1.6.0', int),
+            'metadata': {},
+            'post_op': None
+        },
+    }
 
     def __init__(self):
-        super(QPSPollster, self).__init__()
-
-    IDENTIFIER = 'nios.dns.qps'
-
-    @property
-    def meter_name(self):
-        return self.IDENTIFIER
-
-    @property
-    def meter_type(self):
-        return 'gauge'
-
-    @property
-    def meter_unit(self):
-        return 'queries/s'
+        super(NIOSInspector, self).__init__()
