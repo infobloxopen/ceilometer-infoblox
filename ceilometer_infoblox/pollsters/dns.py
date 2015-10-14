@@ -16,12 +16,12 @@
 from ceilometer_infoblox import pollsters
 
 
-class QPSPollster(pollsters.BaseNIOSPollster):
+class DNSPollster(pollsters.BaseNIOSPollster):
 
     def __init__(self):
-        super(QPSPollster, self).__init__()
+        super(DNSPollster, self).__init__()
 
-    IDENTIFIER = 'nios.dns.qps'
+    IDENTIFIER = 'nios.dns.invalid'
 
     @property
     def meter_name(self):
@@ -34,3 +34,23 @@ class QPSPollster(pollsters.BaseNIOSPollster):
     @property
     def meter_unit(self):
         return 'queries/s'
+
+
+class QPSPollster(DNSPollster):
+
+    def __init__(self):
+        super(QPSPollster, self).__init__()
+
+    IDENTIFIER = 'nios.dns.qps'
+
+
+class CHRPollster(DNSPollster):
+
+    def __init__(self):
+        super(CHRPollster, self).__init__()
+
+    IDENTIFIER = 'nios.dns.chr'
+
+    @property
+    def meter_unit(self):
+        return '%'

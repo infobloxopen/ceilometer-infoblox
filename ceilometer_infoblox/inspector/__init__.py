@@ -19,14 +19,29 @@ from ceilometer.hardware.inspector import snmp
 
 class NIOSInspector(snmp.SNMPInspector):
 
-    MAPPING = {
-        'nios.dns.qps': {
-            'matching_type': 'exact',
-            'metric_oid': ('1.3.6.1.4.1.7779.3.1.1.3.1.6.0', int),
+    OID_DNS_STATS = '1.3.6.1.4.1.7779.3.1.1.3.1'
+    OID_DHCP_STATS = '1.3.6.1.4.1.7779.3.1.1.4.1.3'
+
+    def _make_mapping(name, base_oid, oid):
+        return ('nios.%s' % name, {
+            'matching_type': snmp.EXACT,
+            'metric_oid': (base_oid + oid, int),
             'metadata': {},
             'post_op': None
-        },
-    }
+        })
+
+    MAPPING = dict([
+        _make_mapping('dns.qps', OID_DNS_STATS, '.6.0'),
+        _make_mapping('dns.chr', OID_DNS_STATS, '.5.0'),
+        _make_mapping('dhcp.discovers', OID_DHCP_STATS, '.1.0'),
+        _make_mapping('dhcp.requests', OID_DHCP_STATS, '.2.0'),
+        _make_mapping('dhcp.releases', OID_DHCP_STATS, '.3.0'),
+        _make_mapping('dhcp.offers', OID_DHCP_STATS, '.4.0'),
+        _make_mapping('dhcp.acks', OID_DHCP_STATS, '.5.0'),
+        _make_mapping('dhcp.nacks', OID_DHCP_STATS, '.6.0'),
+        _make_mapping('dhcp.declines', OID_DHCP_STATS, '.7.0'),
+        _make_mapping('dhcp.informs', OID_DHCP_STATS, '.8.0'),
+        _make_mapping('dhcp.others', OID_DHCP_STATS, '.9.0')])
 
     def __init__(self):
         super(NIOSInspector, self).__init__()
