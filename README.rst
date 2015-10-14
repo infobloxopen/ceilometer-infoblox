@@ -17,16 +17,6 @@ Features
 This module enables SNMP polling of NIOS instances to collect DNS queries per
 second.
 
-Enabling In DevStack
---------------------
-
-To enable use of Infoblox Ceilometer meters in DevStack, add this repository as
-a plugin:
-
-     enable_plugin ceilometer-infoblox https://github.com/infobloxopen/ceilometer-infoblox.git
-     enable_service ceilometer-infoblox
-
-
 OpenStack Configuration
 -----------------------
 
