@@ -22,6 +22,7 @@ from ceilometer import sample
 
 from ceilometer_infoblox import inspector as ins
 
+
 @six.add_metaclass(abc.ABCMeta)
 class BaseNIOSPollster(plugin.HardwarePollster):
 

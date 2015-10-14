@@ -107,7 +107,7 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
             except KeyError:
                 LOG.error(
                     ("Couldn't obtain %(type)s IP address for network "
-                      " %(network)s of instance %(id)s")
+                     " %(network)s of instance %(id)s")
                     % ({'type': 'floating' if self.use_floating else 'fixed',
                         'network': self.management_network,
                         'id': instance.id})
