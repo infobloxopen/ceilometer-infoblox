@@ -76,10 +76,16 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
         resources = []
         for instance in instances:
             try:
-                if instance.metadata.get(metadata_name, None) is None:
+                metadata_value = instance.metadata.get(metadata_name, None)
+                if metadata_value is None:
                     LOG.debug("Skipping instance %s; not tagged with '%s' "
                               "metadata tag." % (instance.id, metadata_name))
                     continue
+
+                # Copy the Nova metering.stack meta-data to this resource,
+                # so that standard autoscale code will work without custom
+                # filtering.
+                metering_stack = instance.metadata.get("metering.stack", None)
 
                 ip_addr = self._instance_ip(instance)
                 if password:
@@ -94,13 +100,15 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
                     'name': getattr(instance,
                                     'OS-EXT-SRV-ATTR:instance_name', u''),
                     'instance_type': i_type,
+                    metadata_name: metadata_value,
                     'host': instance.hostId,
                     'flavor': instance.flavor,
                     'status': instance.status.lower(),
                     'resource_id': instance.id,
                     'resource_url': url,
                     'user_id': instance.user_id,
-                    'tenant_id': instance.tenant_id
+                    'tenant_id': instance.tenant_id,
+                    'metering.stack': metering_stack
                 }
 
                 resources.append(resource)
