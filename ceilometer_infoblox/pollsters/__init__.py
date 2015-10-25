@@ -33,18 +33,8 @@ class BaseNIOSPollster(plugin.HardwarePollster):
     def default_discovery(self):
         return 'nios_instances'
 
-    def generate_samples(self, host_url, data):
-        """Generate a list of Sample from the data returned by inspector
-
-        :param host_url: host url of the endpoint
-        :param data: list of data returned by the corresponding inspector
-        """
-        samples = []
-        for (value, metadata, extra) in data:
-            samples.append(self.generate_one_sample(value, metadata, extra))
-        return samples
-
-    def generate_one_sample(self, value, metadata, extra):
+    def generate_one_sample(self, host_url, datum):
+        value, metadata, extra = datum
         return sample.Sample(
             name=self.meter_name,
             type=self.meter_type,
