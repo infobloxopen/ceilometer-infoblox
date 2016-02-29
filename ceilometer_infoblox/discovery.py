@@ -13,26 +13,31 @@
 # under the License.
 
 from oslo_config import cfg
+from oslo_log import log
 
 from ceilometer.compute import discovery
-from ceilometer.openstack.common import log
+from ceilometer.i18n import _
 
 LOG = log.getLogger(__name__)
+MD_SNMP_IP = 'infoblox-snmp-ip'
+MD_SNMP_PORT = 'infoblox-snmp-port'
+MD_SNMP_USER = 'infoblox-snmp-community'
+MD_SNMP_PASS = 'infoblox-snmp-password'
+MD_IB_METADATA = 'infoblox'
+CFG_GROUP = 'infoblox'
 
 cfg.CONF.register_group(cfg.OptGroup(
-    name='infoblox', title="Configuration for Infoblox Meters"
+    name=CFG_GROUP, title="Configuration for Infoblox Meters"
 ))
 
 OPTS = [
-    cfg.StrOpt('snmp_community_or_username'),
+    cfg.StrOpt('snmp_community_or_username', default='public'),
     cfg.StrOpt('snmp_password'),
     cfg.IntOpt('snmp_port', default=161),
-    cfg.StrOpt('management_network'),
-    cfg.BoolOpt('use_floating_ip', default=True),
-    cfg.StrOpt('metadata_name', default='nios')
+    cfg.StrOpt('metadata_name', default=MD_IB_METADATA)
 ]
 
-cfg.CONF.register_opts(OPTS, group='infoblox')
+cfg.CONF.register_opts(OPTS, group=CFG_GROUP)
 
 
 class NIOSDiscovery(discovery.InstanceDiscovery):
@@ -41,45 +46,60 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
 
     @property
     def management_network(self):
-        return cfg.CONF['infoblox'].management_network
+        return cfg.CONF[CFG_GROUP].management_network
 
     @property
-    def use_floating(self):
-        return cfg.CONF['infoblox'].use_floating_ip
+    def md_name(self):
+        return cfg.CONF[CFG_GROUP].metadata_name
 
-    def _instance_ip(self, instance):
-        port = instance.addresses[self.management_network]
+    @property
+    def default_snmp_port(self):
+        return cfg.CONF[CFG_GROUP].snmp_port
 
-        # Only IPv4 for now
-        use_ip = None
-        for ip in port:
-            if ip['version'] != 4:
-                continue
-            if self.use_floating and ip['OS-EXT-IPS:type'] != 'floating':
-                continue
-            use_ip = ip['addr']
-            break
+    @property
+    def default_snmp_username(self):
+        return cfg.CONF[CFG_GROUP].snmp_community_or_username
 
-        # Treat no IP found the same as invalid network name
-        if use_ip is None:
+    @property
+    def default_snmp_password(self):
+        return cfg.CONF[CFG_GROUP].snmp_password
+
+    def _instance_url(self, instance):
+        user = instance.metadata.get(MD_SNMP_USER, self.default_snmp_username)
+        pw = instance.metadata.get(MD_SNMP_PASS, self.default_snmp_password)
+        snmp_port = instance.metadata.get(MD_SNMP_PORT, self.default_snmp_port)
+
+        ip = instance.metadata.get(MD_SNMP_IP, None)
+        if ip is None:
+            for port in instance.addresses.values():
+                for port_ip in port:
+                    # Only IPv4 for now
+                    if port_ip['version'] != 4:
+                        continue
+                    if port_ip['OS-EXT-IPS:type'] != 'floating':
+                        continue
+                    ip = port_ip['addr']
+                    break
+
+        if ip is None:
             raise KeyError
 
-        return use_ip
+        if pw:
+            url = 'snmp://%s:%s@%s:%d' % (user, pw, ip, snmp_port)
+        else:
+            url = 'snmp://%s@%s:%d' % (user, ip, snmp_port)
+
+        return url
 
     def discover(self, manager, param=None):
         instances = super(NIOSDiscovery, self).discover(manager, param)
-        username = cfg.CONF['infoblox'].snmp_community_or_username
-        password = cfg.CONF['infoblox'].snmp_password
-        port = cfg.CONF['infoblox'].snmp_port
-        metadata_name = cfg.CONF['infoblox'].metadata_name
-
         resources = []
         for instance in instances:
             try:
-                metadata_value = instance.metadata.get(metadata_name, None)
-                if metadata_value is None:
+                md_value = instance.metadata.get(self.md_name, None)
+                if md_value is None:
                     LOG.debug("Skipping instance %s; not tagged with '%s' "
-                              "metadata tag." % (instance.id, metadata_name))
+                              "metadata tag." % (instance.id, self.md_name))
                     continue
 
                 # Copy the Nova metering.stack meta-data to this resource,
@@ -87,20 +107,14 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
                 # filtering.
                 metering_stack = instance.metadata.get("metering.stack", None)
 
-                ip_addr = self._instance_ip(instance)
-                if password:
-                    url = ('snmp://%s:%s@%s:%d' %
-                           (username, password, ip_addr, port))
-                else:
-                    url = 'snmp://%s@%s:%d' % (username, ip_addr, port)
-
+                url = self._instance_url(instance)
                 i_type = instance.flavor['name'] if instance.flavor else None
                 resource = {
                     'display_name': instance.name,
                     'name': getattr(instance,
                                     'OS-EXT-SRV-ATTR:instance_name', u''),
                     'instance_type': i_type,
-                    metadata_name: metadata_value,
+                    self.md_name: md_value,
                     'host': instance.hostId,
                     'flavor': instance.flavor,
                     'status': instance.status.lower(),
@@ -114,11 +128,8 @@ class NIOSDiscovery(discovery.InstanceDiscovery):
                 resources.append(resource)
             except KeyError:
                 LOG.error(
-                    ("Couldn't obtain %(type)s IP address for network "
-                     " %(network)s of instance %(id)s")
-                    % ({'type': 'floating' if self.use_floating else 'fixed',
-                        'network': self.management_network,
-                        'id': instance.id})
+                    _("Could not determine SNMP IP address for instance %s.")
+                    % instance.id
                 )
 
         return resources

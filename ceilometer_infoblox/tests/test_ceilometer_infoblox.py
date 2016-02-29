@@ -20,8 +20,6 @@ Tests for `ceilometer_infoblox` module.
 """
 import mock
 
-from oslo_config import cfg
-
 from ceilometer.compute import discovery as compute_disc
 from ceilometer_infoblox import discovery
 from ceilometer_infoblox.tests import base
@@ -31,14 +29,11 @@ class TestCeilometer_infoblox(base.TestCase):
 
     def setUp(self):
         super(TestCeilometer_infoblox, self).setUp()
-        cfg.CONF.set_override(name='management_network',
-                              group='infoblox',
-                              override='service-net')
 
-    def _nios_server(self, nios):
+    def _nios_server(self, nios, ip_type='floating'):
         s = mock.MagicMock()
         if nios:
-            p = mock.PropertyMock(return_value={'nios': 'true'})
+            p = mock.PropertyMock(return_value={'infoblox-nsgroup': 'default'})
         else:
             p = mock.PropertyMock(return_value={})
 
@@ -61,7 +56,7 @@ class TestCeilometer_infoblox(base.TestCase):
                 {
                     'OS-EXT-IPS-MAC:mac_addr': 'fa:16:3e:e5:ab:87',
                     'version': 4, 'addr': '172.16.98.67',
-                    'OS-EXT-IPS:type': 'floating'
+                    'OS-EXT-IPS:type': ip_type
                 }
             ]
         }
@@ -78,35 +73,11 @@ class TestCeilometer_infoblox(base.TestCase):
         nios_disc = discovery.NIOSDiscovery()
         self.assertEqual(len(nios_disc.discover(mock.MagicMock())), 1)
 
-    def test_discovery_nios_no_port(self):
-        server_list = [self._nios_server(True), self._nios_server(False)]
-        d = mock.MagicMock()
-        d.return_value = server_list
-        compute_disc.InstanceDiscovery.discover = d
-        cfg.CONF.set_override(name='management_network',
-                              group='infoblox',
-                              override='junk')
-        nios_disc = discovery.NIOSDiscovery()
-        self.assertEqual(len(nios_disc.discover(mock.MagicMock())), 0)
-
     def test_discovery_nios_no_fip(self):
-        server_list = [self._nios_server(True), self._nios_server(False)]
+        server_list = [self._nios_server(True, 'fixed'),
+                       self._nios_server(False)]
         d = mock.MagicMock()
         d.return_value = server_list
         compute_disc.InstanceDiscovery.discover = d
-        cfg.CONF.set_override(name='management_network',
-                              group='infoblox',
-                              override='mgmt-net')
         nios_disc = discovery.NIOSDiscovery()
         self.assertEqual(len(nios_disc.discover(mock.MagicMock())), 0)
-
-    def test_discovery_nios_no_use_fip(self):
-        server_list = [self._nios_server(True), self._nios_server(False)]
-        d = mock.MagicMock()
-        d.return_value = server_list
-        compute_disc.InstanceDiscovery.discover = d
-        cfg.CONF.set_override(name='use_floating_ip',
-                              group='infoblox',
-                              override=False)
-        nios_disc = discovery.NIOSDiscovery()
-        self.assertEqual(len(nios_disc.discover(mock.MagicMock())), 1)

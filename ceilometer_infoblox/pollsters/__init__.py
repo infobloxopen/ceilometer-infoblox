@@ -17,38 +17,61 @@ import abc
 from oslo_utils import timeutils
 import six
 
-from ceilometer.hardware import plugin
+from ceilometer.hardware.pollsters import generic
 from ceilometer import sample
-
-from ceilometer_infoblox import inspector as ins
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseNIOSPollster(plugin.HardwarePollster):
+class BaseNIOSPollster(generic.GenericHardwareDeclarativePollster):
 
     def __init__(self):
         super(BaseNIOSPollster, self).__init__()
+
+        self._update_meter_definition(self._get_meter())
+
+    def _get_meter(self):
+        return generic.MeterDefinition({
+            'name': self.meter_name,
+            'unit': self.meter_unit,
+            'type': self.meter_type,
+            'snmp_inspector': {
+                'matching_type': 'exact',
+                'oid': self.meter_oid,
+                'type': 'int'
+            }
+        })
+
+    @property
+    def meter_name(self):
+        return self.IDENTIFIER
+
+    @property
+    def meter_oid(self):
+        return self.BASE_OID + self.OID
 
     @property
     def default_discovery(self):
         return 'nios_instances'
 
-    def generate_one_sample(self, host_url, datum):
-        value, metadata, extra = datum
-        return sample.Sample(
-            name=self.meter_name,
-            type=self.meter_type,
-            unit=self.meter_unit,
-            volume=value,
-            user_id=extra['user_id'],
-            project_id=extra['tenant_id'],
-            resource_id=extra['resource_id'],
-            timestamp=timeutils.utcnow().isoformat(),
-            resource_metadata=extra,
-        )
+    def generate_samples(self, host_url, data):
+        """Generate a list of Sample from the data returned by inspector
 
-    def _get_inspector(self, parsed_url):
-        if parsed_url.scheme not in self.inspectors:
-            driver = ins.NIOSInspector()
-            self.inspectors[parsed_url.scheme] = driver
-        return self.inspectors[parsed_url.scheme]
+        :param host_url: host url of the endpoint
+        :param data: list of data returned by the corresponding inspector
+        """
+        samples = []
+        definition = self.meter_definition
+        for (value, metadata, extra) in data:
+            s = sample.Sample(
+                name=definition.name,
+                type=definition.type,
+                unit=definition.unit,
+                volume=value,
+                user_id=extra['user_id'],
+                project_id=extra['tenant_id'],
+                resource_id=extra['resource_id'],
+                timestamp=timeutils.utcnow().isoformat(),
+                resource_metadata=extra,
+            )
+            samples.append(s)
+        return samples

@@ -4,18 +4,19 @@ ceilometer-infoblox
 
 Infoblox Custom Meters for Ceilometer
 
-This package provides files used by OpenStack Ceilometer to monitor the DNS
-queries-per-second from Infoblox NIOS instances. With this package installed
+This package provides files used by OpenStack Ceilometer to monitor various DNS
+and DHCP metrics from Infoblox NIOS instances. With this package installed
 and configured, the Ceilometer Compute Agent will poll local NIOS instances
-via SNMP, and store the results as samples with the metric name 'nios.dns.qps'.
+via SNMP, and store the results as samples with metric names starting with
+'nios.dns' and 'nios.dhcp'.
 
 * Free software: Apache license
 
 Features
 --------
 
-This module enables SNMP polling of NIOS instances to collect DNS queries per
-second.
+This module enables SNMP polling of NIOS instances to collect DNS and DHCP
+metrics.
 
 OpenStack Configuration
 -----------------------
@@ -28,40 +29,41 @@ node, the grid member IP address used must be reachable from the host. This
 can be done by allocating the IP on an external network, or by using a floating
 IP.
 
-To configure the Ceilometer agent, you must set the following parameters in a
-``[infoblox]`` stanza within the ``ceilometer.conf`` file.
+By default, the first floating IP for a given instance will be used for SNMP
+access. To override this behavior, you can set a ``infoblox-snmp-ip`` metadata
+value on the instance.
 
-*management_network* - this is the name of the OpenStack network for the port
-that should be used to poll the NIOS instance. If you have only set up LAN1,
-then this should be the network to which LAN1 is attached.
+Similarly, you may set the default SNMP community, password, and port in a
+``[infoblox]`` stanza within the ``ceilometer.conf`` file, or you can set them
+on a per-instance basis using instance metadata.
 
-*use_floating_ip* - if subnets on the ``management_network`` are not directly
-reachable from the host, then you must use a floating IP address and set this
-to ``True``. This will cause the polling agent to use the floating IP address
-associated with the fixed IP address that is on the port attached to the 
-``management_network``. Default value is ``True``.
+The table below summarizes the different options.
 
-*metadata_name* - only instances with a port on the ``management_network`` and
-flagged with the metadata named here will be polled. Note that the *value* of
-the metadata does not matter; if the key exists, that instance will be polled.
-Default value is ``nios``.
+.. list-table::
+   :header-rows: 1
+   :widths: 15 15 70
 
-*snmp_community_or_username* - the SNMP community for v2c, or the user name for
-SNMPv3.
-
-*snmp_password* - the SNMP password for SNMPv3.
-
-*snmp_port* - the port to use for SNMP polling. Default value is ``161``.
-
-
-*Example Ceilometer Configuration*
-
-::
-
- [infoblox]
- management_network = service-net
- use_floating_ip = True
- snmp_community_or_username = public
+   * - Config File Variable
+     - Instance Metadata Name
+     - Description
+   * - metadata_name
+     - N/A
+     - The name of the instance metadata item used to identify an instance as
+       an Infoblox DDI appliance. Default value is ``infoblox``.
+   * - N/A
+     - infoblox-snmp-ip
+     - By default the first floating IP found is used; set this value on the
+       instance to specify a particular IP to be used for SNMP access.
+   * - snmp_community_or_username
+     - infoblox-snmp-community
+     - The SNMP community for v2c, or the user name for SNMPv3. The default
+       value is ``public``.
+   * - snmp_password
+     - infoblox-snmp-password
+     - The SNMP password for SNMPv3.
+   * - snmp_port
+     - infoblox-snmp-port
+     - The port to use for SNMP polling. Default value is ``161``.
 
 You must also configure the security groups to allow UDP traffic to port 161
 on the NIOS instances, from the host IP network.
