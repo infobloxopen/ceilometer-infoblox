@@ -22,10 +22,7 @@ class DHCPPollster(pollsters.BaseNIOSPollster):
         super(DHCPPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.invalid'
-
-    @property
-    def meter_name(self):
-        return self.IDENTIFIER
+    BASE_OID = '1.3.6.1.4.1.7779.3.1.1.4.1.3'
 
     @property
     def meter_type(self):
@@ -42,6 +39,7 @@ class DiscoversPollster(DHCPPollster):
         super(DiscoversPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.discovers'
+    OID = '.1.0'
 
 
 class RequestsPollster(DHCPPollster):
@@ -50,6 +48,7 @@ class RequestsPollster(DHCPPollster):
         super(RequestsPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.requests'
+    OID = '.2.0'
 
 
 class ReleasesPollster(DHCPPollster):
@@ -58,6 +57,7 @@ class ReleasesPollster(DHCPPollster):
         super(ReleasesPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.releases'
+    OID = '.3.0'
 
 
 class OffersPollster(DHCPPollster):
@@ -66,6 +66,7 @@ class OffersPollster(DHCPPollster):
         super(OffersPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.offers'
+    OID = '.4.0'
 
 
 class AcksPollster(DHCPPollster):
@@ -74,6 +75,7 @@ class AcksPollster(DHCPPollster):
         super(AcksPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.acks'
+    OID = '.5.0'
 
 
 class NacksPollster(DHCPPollster):
@@ -82,6 +84,7 @@ class NacksPollster(DHCPPollster):
         super(NacksPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.nacks'
+    OID = '.6.0'
 
 
 class DeclinesPollster(DHCPPollster):
@@ -90,6 +93,7 @@ class DeclinesPollster(DHCPPollster):
         super(DeclinesPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.declines'
+    OID = '.7.0'
 
 
 class InformsPollster(DHCPPollster):
@@ -98,6 +102,7 @@ class InformsPollster(DHCPPollster):
         super(InformsPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.informs'
+    OID = '.8.0'
 
 
 class OthersPollster(DHCPPollster):
@@ -106,3 +111,4 @@ class OthersPollster(DHCPPollster):
         super(OthersPollster, self).__init__()
 
     IDENTIFIER = 'nios.dhcp.others'
+    OID = '.9.0'

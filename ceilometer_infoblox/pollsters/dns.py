@@ -22,10 +22,7 @@ class DNSPollster(pollsters.BaseNIOSPollster):
         super(DNSPollster, self).__init__()
 
     IDENTIFIER = 'nios.dns.invalid'
-
-    @property
-    def meter_name(self):
-        return self.IDENTIFIER
+    BASE_OID = '1.3.6.1.4.1.7779.3.1.1.3.1'
 
     @property
     def meter_type(self):
@@ -42,6 +39,7 @@ class QPSPollster(DNSPollster):
         super(QPSPollster, self).__init__()
 
     IDENTIFIER = 'nios.dns.qps'
+    OID = '.6.0'
 
 
 class CHRPollster(DNSPollster):
@@ -50,6 +48,7 @@ class CHRPollster(DNSPollster):
         super(CHRPollster, self).__init__()
 
     IDENTIFIER = 'nios.dns.chr'
+    OID = '.5.0'
 
     @property
     def meter_unit(self):
