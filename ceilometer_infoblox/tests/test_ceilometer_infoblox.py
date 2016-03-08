@@ -33,7 +33,7 @@ class TestCeilometer_infoblox(base.TestCase):
     def _nios_server(self, nios, ip_type='floating'):
         s = mock.MagicMock()
         if nios:
-            p = mock.PropertyMock(return_value={'infoblox-nsgroup': 'default'})
+            p = mock.PropertyMock(return_value={'infoblox': 'default'})
         else:
             p = mock.PropertyMock(return_value={})
 
